@@ -1,8 +1,8 @@
-#include "Mi/Hello.hpp"
+#include "TemplateProject/TemplateProject.hpp"
 
 #include <iostream>
 
 int main() {
-  std::cout << Mi::HelloMessage() << '\n';
+  std::cout << TemplateProject::ProjectName() << '\n';
   return 0;
 }

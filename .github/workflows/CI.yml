@@ -38,9 +38,9 @@ jobs:
 
       - name: Verify formatting
         shell: bash
-        run: >
-          clang-format --dry-run --Werror
-          $(git ls-files '*.cpp' '*.hpp')
+        run: |
+          git ls-files -z -- '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' '*.hxx' |
+            xargs -0 clang-format --dry-run --Werror
 
       - name: Configure
         run: cmake --preset ${{ matrix.preset }}
@@ -53,19 +53,20 @@ jobs:
 
       - name: Verify static analysis
         shell: bash
-        run: >
-          clang-tidy --warnings-as-errors='*'
-          -p build/${{ matrix.preset }}
-          $(git ls-files '*.cpp')
+        run: |
+          git ls-files -z -- '*.c' '*.cc' '*.cpp' '*.cxx' |
+            xargs -0 clang-tidy --warnings-as-errors='*' \
+              -p build/${{ matrix.preset }}
 
   report-codeberg-status:
     name: Report status to Codeberg
     needs: build-and-test
     # PR commits may not exist in the Codeberg mirror and secrets are unavailable
-    # to forked PRs. Report only the mirrored push commits.
-    if: ${{ always() && github.event_name == 'push' }}
+    # to forked PRs. Report only mirrored push commits, when configured.
+    if: ${{ always() && github.event_name == 'push' && vars.CODEBERG_REPOSITORY != '' }}
     runs-on: ubuntu-latest
     env:
+      CODEBERG_REPOSITORY: ${{ vars.CODEBERG_REPOSITORY }}
       CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
       CI_RESULT: ${{ needs.build-and-test.result }}
     steps:
@@ -80,7 +81,7 @@ jobs:
           esac
 
           curl --fail-with-body --request POST \
-            "https://codeberg.org/api/v1/repos/assetto/mi/statuses/${GITHUB_SHA}" \
+            "https://codeberg.org/api/v1/repos/${CODEBERG_REPOSITORY}/statuses/${GITHUB_SHA}" \
             --header "Authorization: token ${CODEBERG_TOKEN}" \
             --header "Content-Type: application/json" \
             --data "$(jq -n \
