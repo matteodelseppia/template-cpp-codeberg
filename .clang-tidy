@@ -5,18 +5,18 @@ Checks: >
 WarningsAsErrors: '*'
 CheckOptions:
   - key: readability-identifier-naming.NamespaceCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.ClassCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.MethodCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.FunctionCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.VariableCase
     value: camelBack
   - key: readability-identifier-naming.GlobalVariableCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.GlobalConstantCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.ConstantCase
-    value: PascalCase
+    value: CamelCase
