@@ -57,3 +57,35 @@ jobs:
           clang-tidy --warnings-as-errors='*'
           -p build/${{ matrix.preset }}
           $(git ls-files '*.cpp')
+
+  report-codeberg-status:
+    name: Report status to Codeberg
+    needs: build-and-test
+    # PR commits may not exist in the Codeberg mirror and secrets are unavailable
+    # to forked PRs. Report only the mirrored push commits.
+    if: ${{ always() && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    env:
+      CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+      CI_RESULT: ${{ needs.build-and-test.result }}
+    steps:
+      - name: Publish commit status
+        shell: bash
+        run: |
+          case "$CI_RESULT" in
+            success) state=success ;;
+            failure) state=failure ;;
+            cancelled) state=error ;;
+            *) state=error ;;
+          esac
+
+          curl --fail-with-body --request POST \
+            "https://codeberg.org/api/v1/repos/assetto/mi/statuses/${GITHUB_SHA}" \
+            --header "Authorization: token ${CODEBERG_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "$(jq -n \
+              --arg state "$state" \
+              --arg context "github-actions/ci" \
+              --arg description "GitHub Actions CI: $state" \
+              --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+              '{state: $state, context: $context, description: $description, target_url: $target_url}')"
